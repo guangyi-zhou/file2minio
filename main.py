@@ -17,24 +17,22 @@ def upload_single_file(uploader: MinIOFileUploader, file_path: str, relative_pat
     
     success = uploader.upload_file(file_path, relative_path)
     if success:
-        print("✅ 文件上传成功!")
+        print("文件上传成功!")
     else:
-        print("❌ 文件上传失败!")
+        print("文件上传失败!")
     return success
 
 def upload_multiple_files(uploader: MinIOFileUploader, file_mappings: list):
     """批量上传文件"""
     print(f"正在批量上传 {len(file_mappings)} 个文件...")
-    
     results = uploader.upload_files_batch(file_mappings)
-    
     print(f"\n📊 上传结果统计:")
     print(f"总文件数: {results['total']}")
-    print(f"成功: {results['success']} ✅")
-    print(f"失败: {results['failed']} ❌")
+    print(f"成功: {results['success']}")
+    print(f"失败: {results['failed']}")
     
     if results['failed'] > 0:
-        print(f"\n❌ 失败的文件:")
+        print(f"\n失败的文件:")
         for local_path, relative_path in results['failed_files']:
             print(f"  {local_path} -> {relative_path}")
     
@@ -50,11 +48,11 @@ def upload_directory(uploader: MinIOFileUploader, dir_path: str, base_relative: 
     
     print(f"\n📊 目录上传结果统计:")
     print(f"总文件数: {results['total']}")
-    print(f"成功: {results['success']} ✅")
-    print(f"失败: {results['failed']} ❌")
+    print(f"成功: {results['success']}")
+    print(f"失败: {results['failed']}")
     
     if results['failed'] > 0:
-        print(f"\n❌ 失败的文件:")
+        print(f"\n失败的文件:")
         for local_path, relative_path in results['failed_files']:
             print(f"  {local_path} -> {relative_path}")
     
@@ -74,31 +72,31 @@ def main():
     args = parser.parse_args()
     
     try:
-        print("🚀 初始化MinIO文件上传器...")
+        print("初始化MinIO文件上传器...")
         uploader = MinIOFileUploader()
         
-        print("🔧 检查存储桶...")
+        print("检查存储桶...")
         if not uploader.ensure_bucket_exists():
-            print("❌ 存储桶创建失败，程序退出")
+            print("存储桶创建失败，程序退出")
             return False
         
         success = False
         
         if args.mode == 'single':
             if not args.file or not args.relative:
-                print("❌ 单文件模式需要指定 --file 和 --relative 参数")
+                print("单文件模式需要指定 --file 和 --relative 参数")
                 print("示例: python main.py --mode single --file /path/to/file.txt --relative documents/file.txt")
                 return False
             
             if not os.path.exists(args.file):
-                print(f"❌ 文件不存在: {args.file}")
+                print(f"文件不存在: {args.file}")
                 return False
                 
             success = upload_single_file(uploader, args.file, args.relative)
             
         elif args.mode == 'batch':
             if not args.files:
-                print("❌ 批量模式需要指定 --files 参数")
+                print("批量模式需要指定 --files 参数")
                 print("示例: python main.py --mode batch --files /path/file1.txt:docs/file1.txt /path/file2.jpg:images/file2.jpg")
                 return False
             
@@ -107,65 +105,60 @@ def main():
                 try:
                     local_path, relative_path = file_mapping.split(':', 1)
                     if not os.path.exists(local_path):
-                        print(f"⚠️  文件不存在，跳过: {local_path}")
+                        print(f"文件不存在，跳过: {local_path}")
                         continue
                     file_mappings.append((local_path, relative_path))
                 except ValueError:
-                    print(f"❌ 文件映射格式错误: {file_mapping}")
+                    print(f"文件映射格式错误: {file_mapping}")
                     print("正确格式: local_path:relative_path")
                     return False
             
             if not file_mappings:
-                print("❌ 没有有效的文件可上传")
+                print("没有有效的文件可上传")
                 return False
                 
             success = upload_multiple_files(uploader, file_mappings)
             
         elif args.mode == 'directory':
             if not args.directory:
-                print("❌ 目录模式需要指定 --directory 参数")
+                print("目录模式需要指定 --directory 参数")
                 print("示例: python main.py --mode directory --directory /path/to/directory --base-relative backup")
                 return False
             
             if not os.path.isdir(args.directory):
-                print(f"❌ 目录不存在: {args.directory}")
+                print(f" 目录不存在: {args.directory}")
                 return False
                 
             success = upload_directory(uploader, args.directory, args.base_relative)
         
         if success:
-            print("\n🎉 所有文件上传完成!")
+            print("\n 所有文件上传完成!")
         else:
-            print("\n😞 部分或全部文件上传失败")
+            print("\n部分或全部文件上传失败")
             
         return success
         
     except KeyboardInterrupt:
-        print("\n\n⏹️  用户中断操作")
+        print("\n\n用户中断操作")
         return False
     except Exception as e:
-        print(f"\n❌ 程序执行异常: {e}")
+        print(f"\n程序执行异常: {e}")
         logger.exception("程序执行异常")
         return False
 
 def show_usage_examples():
     """显示使用示例"""
     print("""
-📖 使用示例:
-
+使用示例:
 1. 上传单个文件:
    python main.py --mode single --file C:\\data\\document.pdf --relative documents/report.pdf
-
 2. 批量上传文件:
    python main.py --mode batch --files C:\\data\\file1.txt:docs/file1.txt C:\\data\\file2.jpg:images/file2.jpg
-
 3. 上传整个目录:
    python main.py --mode directory --directory C:\\data\\photos --base-relative backup/photos
-
 4. 上传目录到根路径:
    python main.py --mode directory --directory C:\\data\\documents
-   
-📝 说明:
+说明:
 - 文件会按当前日期自动分区 (如: 20250904)
 - 文件名会根据相对路径进行MD5加密
 - 所有配置通过 .env 文件管理

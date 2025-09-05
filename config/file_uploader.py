@@ -181,20 +181,6 @@ def main():
         if not uploader.ensure_bucket_exists():
             logger.error("存储桶创建失败，程序退出")
             return
-        
-        # 示例：上传单个文件
-        # uploader.upload_file("/path/to/your/file.txt", "documents/file.txt")
-        
-        # 示例：批量上传文件
-        # file_mappings = [
-        #     ("/path/to/file1.txt", "documents/file1.txt"),
-        #     ("/path/to/file2.jpg", "images/file2.jpg"),
-        # ]
-        # results = uploader.upload_files_batch(file_mappings)
-        
-        # 示例：上传整个目录
-        # results = uploader.upload_directory("/path/to/your/directory", "backup")
-        
         logger.info("请根据需要调用相应的上传方法")
         
     except Exception as e:
